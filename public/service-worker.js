@@ -48,14 +48,14 @@ self.addEventListener('activate', function (event) {
 //fetch
 
 self.addEventListener('fetch', function (event) {
-    const { url } = event.request;
-    if (url.includes('/') || url.includes('/api/transaction')) {
+
+    if (event.request.url.includes('/api/transaction')) {
         event.respondWith(
             caches.open(DATA_CACHE_NAME).then(cache => {
                 return fetch(event.request)
                     .then(response => {
                         if (response.status === 200) {
-                            cache.put(url, response.clone());
+                            cache.put(event.request.url, response.clone());
                         }
                         return response;
                     })
@@ -65,13 +65,14 @@ self.addEventListener('fetch', function (event) {
             })
                 .catch(err => console.log(err))
         );
-    } else {
-        event.respondWith(
-            caches.open(CACHE_NAME).then(cache => {
-                return cache.match(event.request).then(response => {
-                    return response || fetch(event.request);
-                });
-            })
-        );
+        return;
     }
+    event.respondWith(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.match(event.request).then(response => {
+                return response || fetch(event.request);
+            });
+        })
+    )
+
 });
